@@ -44,7 +44,7 @@
 	<!-- Шаблон строки списка -->
 	<Button name="MailHelper_ListRowTemplate" virtual="true" movable="true">
 		<Size>
-			<AbsDimension x="180" y="16"/>
+			<AbsDimension x="180" y="1"/>
 		</Size>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -63,8 +63,13 @@
 		</Layers>
 		<Scripts>
 			<OnLoad>
-					-- Регистрируем левую и ПРАВУЮ кнопки
-					this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				-- Регистрируем левую и ПРАВУЮ кнопки
+				this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				
+				-- Применяем высоту из нашей глобальной переменной
+				if MailHelper and MailHelper.RowHeight then
+					this:SetHeight(MailHelper.RowHeight);
+				end
 			</OnLoad>
 			<OnEnter> getglobal(this:GetName().."Highlight"):Show(); </OnEnter>
 			<OnLeave> getglobal(this:GetName().."Highlight"):Hide(); </OnLeave>

@@ -2,7 +2,7 @@
 ## Interface: 11200
 ## Title: |cff33ffccMail Helper
 ## Author: |cffbe5effAndrgit
-## Version: 1.0.1
+## Version: 1.0.2
 ## SavedVariables: MailHelper_Config
 
 MailHelper.xml

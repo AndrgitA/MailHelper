@@ -6,6 +6,7 @@ MailHelper_DefaultConfig = {
 }
 
 MailHelper.api = getfenv();
+MailHelper.RowHeight = 25;
 
 local registerEvents = {
   "ADDON_LOADED",
@@ -154,7 +155,7 @@ function MailHelper_CheckDragPosition(self)
     return;
   end
 
-  local rowHeight = 22; -- Должно совпадать с высотой строки
+  local rowHeight = MailHelper.RowHeight; -- Должно совпадать с высотой строки
   -- Вычисляем текущую позицию курсора относительно верха списка
   local relativeY = listTop - cursorY;
   -- Определяем, над каким индексом сейчас находится мышь
@@ -236,7 +237,7 @@ function MailHelper_RefreshList(excludeID)
     return;
   end
 
-  local rowHeight = 22 -- Должно совпадать с высотой в XML
+  local rowHeight = MailHelper.RowHeight -- Должно совпадать с высотой в XML
   -- Сначала скрываем абсолютно все существующие строки
   local i = 1;
   local prefixRowFrame = "MailHelper_ListRow";
