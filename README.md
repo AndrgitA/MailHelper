@@ -27,10 +27,6 @@ A lightweight and intuitive recipient manager for the standard World of Warcraft
 *   **UI Integration:** Designed to fit the Vanilla aesthetic; compatible with `pfUI` skinning.
 *   **Safe Interaction:** Direct API calls to ensure name injection works even with heavy UI overhauls.
 
----
-*Developed for the Vanilla 1.12 community.*
-
-
 ## Info
 Addon for creating a sender list for mail
 
@@ -52,4 +48,6 @@ Enter in chat `/mailhelper`
 <img width="825" height="717" alt="image" src="https://github.com/user-attachments/assets/3ebb81b9-3023-48d6-8a67-3777b28bd26d" />
 <img width="687" height="853" alt="image" src="https://github.com/user-attachments/assets/28201a80-c00d-4228-b8bc-31a4f87991e4" />
 
+---
+*Developed for the Vanilla 1.12 community.*
 
