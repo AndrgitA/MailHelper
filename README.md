@@ -1,3 +1,5 @@
+Working for default interface and also supports work with the [TurtleMail](https://github.com/sica42/TurtleMail) addon.
+
 Main cmd for info `/mailhelper`
 
 <img width="604" height="219" alt="image" src="https://github.com/user-attachments/assets/bd2e5f66-ef65-4a85-8b77-07e80cd0df07" />
