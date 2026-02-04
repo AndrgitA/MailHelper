@@ -8,18 +8,26 @@ MailHelper_DefaultConfig = {
 MailHelper.api = getfenv();
 MailHelper.RowHeight = 25;
 
+-- ID (Index) Dragging Frame
+MailHelper.DraggingID = nil;
+MailHelper.DraggingFrame = nil;
+
+-- Hidden frame only for logical when we start dragging with script OnUpdate.
+MailHelper.DragUpdateFrame = CreateFrame("Frame", "MailHelper_DragUpdateFrame", UIParent);
+MailHelper.DragUpdateFrame:Hide();
+
+-- List Frame Events
 local registerEvents = {
   "ADDON_LOADED",
-  -- "PLAYER_LOGIN",
-  -- "PLAYER_ENTERING_WORLD",
   "VARIABLES_LOADED",
-  -- "MAIL_SHOW",
 };
 
+-- Registration Frame Events
 for _, event in registerEvents do
   MailHelper:RegisterEvent(event);
 end
 
+-- Frame Events Handler
 MailHelper:SetScript("OnEvent", function()
   if (event == "VARIABLES_LOADED") then
     MailHelper_Init();
@@ -28,28 +36,7 @@ MailHelper:SetScript("OnEvent", function()
   end
 end);
 
-
--- [ HookScript ]
--- Securely post-hooks a script handler.
--- 'f'          [frame]             the frame which needs a hook
--- 'script'     [string]            the handler to hook
--- 'func'       [function]          the function that should be added
-function MailHelper_HookScript(f, script, func)
-  local prev = f:GetScript(script);
-  f:SetScript(script, function(a1,a2,a3,a4,a5,a6,a7,a8,a9)
-    if (prev) then
-      prev(a1,a2,a3,a4,a5,a6,a7,a8,a9);
-    end
-
-    func(a1,a2,a3,a4,a5,a6,a7,a8,a9);
-  end)
-end
-
-function MailHelper_StringTrim(s)
-  -- Регулярное выражение: ищет от первого непробельного символа до последнего
-  return (string.gsub(s, "^%s*(.-)%s*$", "%1"));
-end
-
+-- Loading and set all variables for addon
 function MailHelper_InitVariables()
   if (not MailHelper_Config) then
     MailHelper_Config = {};
@@ -62,11 +49,13 @@ function MailHelper_InitVariables()
   end
 end
 
+-- Initialization Addon
 function MailHelper_Init()
   MailHelper_InitVariables();
   MailHelper_RefreshPanel();
 end
 
+-- Skinning intarface
 function MailHelper_Skinning()
   local pfUIActive = (
     MailHelper.api.IsAddOnLoaded( "pfUI" ) and
@@ -112,13 +101,11 @@ function MailHelper_RefreshPanel()
   end
 end
 
+-- Handler for click on "MailHelper_SwitchShowButton"
 function MailHelper_SwitchShowMailHelperPanel()
   MailHelper_Config.isVisiblePanel = not MailHelper_Config.isVisiblePanel;
   MailHelper_RefreshPanel();
 end
-
-MailHelper.DraggingID = nil;
-MailHelper.DraggingFrame = nil;
 
 function MailHelper_StopDragging(self)
   local target = self or MailHelper.DraggingFrame;
@@ -136,7 +123,7 @@ function MailHelper_StopDragging(self)
 
   MailHelper.DraggingID = nil;
   MailHelper.DraggingFrame = nil;
-  MailHelper_RefreshList(); -- Финальное выравнивание
+  MailHelper_RefreshList();
 end
 
 function MailHelper_CheckDragPosition(self)
@@ -147,74 +134,67 @@ function MailHelper_CheckDragPosition(self)
 
   local scale = self:GetEffectiveScale();
   local cursorX, cursorY = GetCursorPosition();
-  cursorY = cursorY / scale; -- Координата мыши в игровом пространстве
+  cursorY = cursorY / scale; -- Cursor Position in Game
 
-  -- Получаем верхнюю границу списка (первой строки)
+  -- Top position for scroll list. 
   local listTop = MailHelperPanel_ScrollFrame_ScrollContent:GetTop(); 
   if (not listTop) then
     return;
   end
 
-  local rowHeight = MailHelper.RowHeight; -- Должно совпадать с высотой строки
-  -- Вычисляем текущую позицию курсора относительно верха списка
+  local rowHeight = MailHelper.RowHeight;
+  
+  -- current position cursor
   local relativeY = listTop - cursorY;
-  -- Определяем, над каким индексом сейчас находится мышь
+  -- current target index
   local targetID = math.floor(relativeY / rowHeight) + 1;
   local maxItems = table.getn(MailHelper_Config.SendNames);
 
-  -- Ограничиваем targetID рамками списка
+  -- normalize targetID for current SendNames list
   if (targetID < 1) then
     targetID = 1;
   elseif (targetID > maxItems) then
     targetID = maxItems;
   end
 
-  -- Если курсор перешел на новую позицию в пределах таблицы
-  -- AndrgitMacro_Print(targetID, MailHelper.DraggingID);
   if (targetID ~= MailHelper.DraggingID) then
-    -- Меняем местами данные в таблице
+    -- Swap data rows
     local temp = MailHelper_Config.SendNames[MailHelper.DraggingID];
     MailHelper_Config.SendNames[MailHelper.DraggingID] = MailHelper_Config.SendNames[targetID];
     MailHelper_Config.SendNames[targetID] = temp;
-    
-    -- local oldDragginRow = getglobal("MailHelper_ListRow"..MailHelper.DraggingID);
-    -- local newDragginRow = getglobal("MailHelper_ListRow"..targetID);
-    -- oldDragginRow:SetAlpha(1.0);
-    -- newDragginRow:SetAlpha(0.5);
 
-    -- Обновляем ID перетаскиваемого объекта, чтобы он не прыгал
+    -- Update row ID
     MailHelper.DraggingID = targetID;
 
-    self:SetID(targetID); 
-    -- Перерисовываем список (все строки, КРОМЕ той, что тащим)
+    self:SetID(targetID);
+    -- update list without this target
     MailHelper_RefreshList(targetID); 
   end
 end
 
-function MyRemoveFromList(id)
+-- Remore row from list
+function MailHelper_RemoveFromList(id)
   if MailHelper_Config.SendNames and MailHelper_Config.SendNames[id] then
     table.remove(MailHelper_Config.SendNames, id);
     MailHelper_RefreshList();
   end
 end
 
-function MyAddTextToList()
-  -- Получаем текст из инпута (название EditBox из твоего XML)
+-- Add new line to list
+function MailHelper_AddTextToList()
   local text = MailHelperPanel_Input:GetText();
   local cleanText = MailHelper_StringTrim(text);
-  -- Проверка на пустоту
-  if (not cleanText or cleanText == "") then 
-    -- Опционально: можно "тряхнуть" поле ввода или вывести сообщение
+  
+  if (not cleanText or cleanText == "") then
     UIErrorsFrame:AddMessage("Введите имя персонажа", 1.0, 0.1, 0.1, 1.0);
     return;
   end
   
-  -- Инициализируем базу, если вдруг она пуста
   if (not MailHelper_Config.SendNames) then 
     MailHelper_Config.SendNames = {} 
   end
 
-  -- Проверка на дубликаты (чтобы не добавлять одно и то же имя дважды)
+  -- check for duplicate
   for _, name in ipairs(MailHelper_Config.SendNames) do
     if (string.lower(name) == string.lower(cleanText)) then
       UIErrorsFrame:AddMessage("Это имя уже есть в списке", 1.0, 1.0, 0.0, 1.0);
@@ -222,42 +202,40 @@ function MyAddTextToList()
     end
   end
   
-  -- Добавляем в таблицу
   table.insert(MailHelper_Config.SendNames, cleanText);
-  -- Очищаем поле ввода
+  -- Clean input after add
   MailHelperPanel_Input:SetText("");
   MailHelperPanel_Input:ClearFocus();
   
-  -- ПЕРЕРИСОВЫВАЕМ список, чтобы новая строка появилась в скролле
   MailHelper_RefreshList();
 end
 
+-- Main update function for list items
 function MailHelper_RefreshList(excludeID)
   if (not MailHelper_Config.SendNames) then
     return;
   end
 
-  local rowHeight = MailHelper.RowHeight -- Должно совпадать с высотой в XML
-  -- Сначала скрываем абсолютно все существующие строки
+  local rowHeight = MailHelper.RowHeight
+  
+  -- Hide all current lines
   local i = 1;
   local prefixRowFrame = "MailHelper_ListRow";
-
   while (getglobal(prefixRowFrame..i)) do
     getglobal(prefixRowFrame..i):Hide();
     i = i + 1;
   end
 
-  -- Отрисовываем актуальный список
+  -- Show only rows for list SendNames
   for i, val in ipairs(MailHelper_Config.SendNames) do
     local row = getglobal(prefixRowFrame..i);
     if not row then
       row = CreateFrame("Button", prefixRowFrame..i, MailHelperPanel_ScrollFrame_ScrollContent, "MailHelper_ListRowTemplate");
     end
     
-    row:SetID(i); -- Устанавливаем ID, чтобы OnClick знал, какой индекс удалять
+    row:SetID(i);
     getglobal(row:GetName().."Text"):SetText(val);
 
-    -- Не трогаем позицию строки, которую держит мышка
     if (i ~= excludeID) then
       row:ClearAllPoints();
       row:SetAlpha(1.0);
@@ -268,66 +246,66 @@ function MailHelper_RefreshList(excludeID)
     row:Show();
   end
 
-  -- Обновляем скролл
+  -- Update Scrolle Container
   local count = table.getn(MailHelper_Config.SendNames);
   MailHelperPanel_ScrollFrame_ScrollContent:SetHeight(count * rowHeight);
   MailHelperPanel_ScrollFrame:UpdateScrollChildRect();
 end
 
+-- Hanlder for clicks on row
 function MailHelper_ListRowClick()
   if (arg1 == "LeftButton" and IsShiftKeyDown()) then
+    -- LMB + Shift (Dragging logical code)
     if (not MailHelper.isDragging) then
       MailHelper.isDragging = true;
       this:StartMoving();
       this:SetAlpha(0.5);
       MailHelper.DraggingID = this:GetID();
 
-      -- Запоминаем текущий фрейм
       MailHelper.DraggingFrame = this;
       
-      -- ВКЛЮЧАЕМ OnUpdate только на время перетаскивания
       MailHelper.DragUpdateFrame:Show(); 
     else 
       MailHelper.isDragging = false;
       MailHelper_StopDragging(this);
     end
   elseif (arg1 == "RightButton" and IsShiftKeyDown()) then
-    -- Удаление: Правая кнопка + Alt
-    MyRemoveFromList(this:GetID());
+    -- RMB + Shift (Delete line code)
+    MailHelper_RemoveFromList(this:GetID());
   elseif (arg1 == "LeftButton") then
+    -- LMB (Enter text to SendMailNameEditBox)
+    -- Show Tab2 for Mail
     MailFrameTab2:Click();
 
     local txt = getglobal(this:GetName().."Text"):GetText();
 
     if (txt) then
       if (TurtleMail and TurtleMail.api) then
-        -- Обработка из аддона TurtleMail
+        -- Using MailTurtle api for SetText
         TurtleMail.api.SendMailNameEditBox:_SetText(txt);
       else
-        -- Обработка из нативного интерфейса
+        -- Native SetText
         SendMailNameEditBox:SetText(txt);
       end
+      -- Give games check signal
       SendMailFrame_CanSend();
     end
   end
 end
 
-MailHelper.DragUpdateFrame = CreateFrame("Frame", "MailHelper_DragUpdateFrame", UIParent);
-MailHelper.DragUpdateFrame:Hide(); -- По умолчанию выключен
-
+-- Hanlder for OnUpdate when we still dragging
 MailHelper.DragUpdateFrame:SetScript("OnUpdate", function()
-  -- Вызываем проверку только для того элемента, который сейчас тащат
   if MailHelper.DraggingID and MailHelper.DraggingFrame then
     MailHelper_CheckDragPosition(MailHelper.DraggingFrame);
   end
 end);
 
-
+-- Slash Command Hanlder
 function MailHelper_MainSlashCmd()
   MailHelper_ShowAddonHelpInfo();
 end
 
----@return void
+-- Show info about addon
 function MailHelper_ShowAddonHelpInfo()
 	local infoColor = "|c0000ff00";
 	local textColor = "|caaffff44";

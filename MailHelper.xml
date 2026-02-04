@@ -1,18 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
+	<Script file="Utils.lua" />
 	<Script file="MailHelper.lua"/>	
 
-	<Button name="MailHelperButtonTemplate" virtual="true">
-		<Size>
-			<AbsDimension x="120" y="14"/>
-		</Size>
-		<NormalFont inherits="GameFontNormal"/>
-		<HighlightFont inherits="GameFontHighlight"/>
-		<DisabledFont inherits="GameFontDisable"/>
-		<HighlightTexture inherits="UIPanelButtonHighlightTexture"/>
-	</Button>
-	
-	<!-- Создаем кнопку -->
+	<!-- Main Helper Button -->
 	<Button
 		name="MailHelper_SwitchShowButton"
 		parent="MailFrame"
@@ -41,7 +32,7 @@
 		</Scripts>
 	</Button>
 
-	<!-- Шаблон строки списка -->
+	<!-- Template for row -->
 	<Button name="MailHelper_ListRowTemplate" virtual="true" movable="true">
 		<Size>
 			<AbsDimension x="180" y="1"/>
@@ -54,7 +45,7 @@
 					</Anchors>
 				</FontString>
 			</Layer>
-			<!-- Эффект наведения (подсветка) -->
+			<!-- Hover Effect -->
 			<Layer level="BACKGROUND">
 				<Texture name="$parentHighlight" setAllPoints="true" hidden="true">
 					<Color r="1" g="1" b="1" a="0.1"/>
@@ -63,10 +54,10 @@
 		</Layers>
 		<Scripts>
 			<OnLoad>
-				-- Регистрируем левую и ПРАВУЮ кнопки
+				-- Register buttons
 				this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 				
-				-- Применяем высоту из нашей глобальной переменной
+				-- Set height to row
 				if MailHelper and MailHelper.RowHeight then
 					this:SetHeight(MailHelper.RowHeight);
 				end
@@ -79,7 +70,7 @@
 		</Scripts>
 	</Button>
 
-	<!-- Основная панель -->
+	<!-- Main panel -->
 	<Frame
 		name="MailHelperPanel"
 		parent="MailFrame"
@@ -128,7 +119,7 @@
 				</Anchors>
 				<Scripts>
 					<OnEnterPressed>
-						MyAddTextToList();
+						MailHelper_AddTextToList();
 					</OnEnterPressed>
 				</Scripts>
 			</EditBox>
@@ -148,7 +139,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						MyAddTextToList();
+						MailHelper_AddTextToList();
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -171,7 +162,7 @@
 						<Size>
 							<AbsDimension x="105" y="355"/>
 						</Size>
-						<!-- Здесь будут создаваться строки -->
+						<!-- Here will be new rows for list -->
 					</Frame>
 				</ScrollChild>
 			</ScrollFrame>
